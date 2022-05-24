@@ -43,15 +43,20 @@ next_player:-
     assert(player(S)).
 
 
-
+%OK
+%take all the tiles of the same color of one factory
 find_tiles_in_factory:-
-    writeln(1),
     factory(Factory), !,
     retract(factory(Factory)),
-    take_tiles(Factory),
-find_tiles_in_factory.
+    retractall(right_hand(_)),
+    retractall(left_hand(_)),
+    random_between(1, 4, Rtile),
+    nth1(Rtile, Factory, ToRightHand),
+    assert(right_hand(ToRightHand)),
+    take_tiles(Factory).
 
-%OK
+
+
 %takes all the tiles of the same type and put them in the hand
 take_tiles(Array):-
     right_hand(Hand),
@@ -60,24 +65,24 @@ take_tiles(Array):-
     assert(right_hand([])),
     assert(left_hand([])),
     find_all(Hand, Array).
+
 find_all(_, []):-!.
 find_all(Tiles, Array):-
-    Array = [X|Y],
-    (Tiles = X,
+    Array = [X1|Y1],
+    (Tiles = X1, !,
     right_hand(Hand),
-    append([X], Hand, NewHand),
+    append([X1], Hand, NewHand),
     retractall(right_hand(_)),
     assert(right_hand(NewHand)),
-    find_all(Tiles, Y), !);
-    (Array = [X|Y],
+    find_all(Tiles, Y1), !);
+    (Array = [X2|Y2],
     left_hand(LHand),
-    append([X], LHand, NewLHand),
+    append([X2], LHand, NewLHand),
     retract(left_hand(_)),
     assert(left_hand(NewLHand)),
-    find_all(Tiles, Y)).
+    find_all(Tiles, Y2)).
 
 
-find_tiles_in_center.
 
 put_tiles_in_board_left.
 
