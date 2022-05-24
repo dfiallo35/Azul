@@ -96,17 +96,3 @@ put_tiles_in_bag.
 
 
 
-
-
-a:-
-    %map(generate_factory, [4], Factories).
-    % generate_slabs_bag([], Bag),
-
-
-    % %assert(player(1)),
-    % next_player,
-    % findall(X, player(X), Y),
-    % writeln(Y).
-
-    %ojo
-    ((1=0, writeln(1), !) ; (2=2, writeln(2), !)) , (3=3, writeln(3)).
