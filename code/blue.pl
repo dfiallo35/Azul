@@ -56,6 +56,21 @@ find_tiles_in_factory:-
     take_tiles(Factory).
 
 
+%TODO: take the special tile
+find_tiles_in_center:-
+    center(Center), !,
+    retractall(center(_)),
+    retractall(right_hand(_)),
+    retractall(left_hand(_)),
+    length(Center, LCenter),
+    random_between(1, LCenter, RCenter),
+    nth1(RCenter, Center, ToRightHand),
+    assert(right_hand(ToRightHand)),
+    take_tiles(Center),
+    left_hand(LHand),
+    retractall(left_hand(_)),
+    assert(center(LHand)).
+    
 
 %takes all the tiles of the same type and put them in the hand
 take_tiles(Array):-
