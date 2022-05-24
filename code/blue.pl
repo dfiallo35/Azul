@@ -5,20 +5,13 @@
 %Inicialize the game
 play:-
     number_of_players,
-    retractall(bag(_)), assert(bag([])),
-    generate_slabs_bag,
+    generate_tiles_bag,
     generate_factories,
     fill_factories,
-    retractall(board(_)),
-    players(P),
-    retractall_board,
     generate_players_boards(P),
-    retractall(center(_)),
-    assert(center([])),
-    random_between(1, P, ActualPlayer),
-    retractall(player(_)),
-    assert(player(ActualPlayer)),
-    turn(1).
+    generate_center,
+    select_random_player.
+    %turn(1).
 
 
 %body of the game
@@ -30,8 +23,8 @@ turn(Turn):-
     not(end), !,
 
     % BODY
-    (find_slab_in_factory, (put_slab_in_board_left, !) ; (put_slab_in_penalty, !), !);
-    (find_slab_in_center, (put_slab_in_board_left, !) ; (put_slab_in_penalty, !), !);
+    (find_tiles_in_factory, (put_tiles_in_board_left, !) ; (put_tiles_in_penalty, !), !);
+    (find_tiles_in_center, (put_tiles_in_board_left, !) ; (put_tiles_in_penalty, !), !);
     (move_boardleft_to_boardright, !);
     (assign_points, !),
 
@@ -50,13 +43,45 @@ next_player:-
     assert(player(S)).
 
 
-find_slab_in_factory.
 
-find_slab_in_center.
+find_tiles_in_factory:-
+    writeln(1),
+    factory(Factory), !,
+    retract(factory(Factory)),
+    take_tiles(Factory),
+find_tiles_in_factory.
 
-put_slab_in_board_left.
+%OK
+%takes all the tiles of the same type and put them in the hand
+take_tiles(Array):-
+    right_hand(Hand),
+    retractall(right_hand(_)),
+    retractall(left_hand(_)),
+    assert(right_hand([])),
+    assert(left_hand([])),
+    find_all(Hand, Array).
+find_all(_, []):-!.
+find_all(Tiles, Array):-
+    Array = [X|Y],
+    (Tiles = X,
+    right_hand(Hand),
+    append([X], Hand, NewHand),
+    retractall(right_hand(_)),
+    assert(right_hand(NewHand)),
+    find_all(Tiles, Y), !);
+    (Array = [X|Y],
+    left_hand(LHand),
+    append([X], LHand, NewLHand),
+    retract(left_hand(_)),
+    assert(left_hand(NewLHand)),
+    find_all(Tiles, Y)).
 
-put_slab_in_penalty.
+
+find_tiles_in_center.
+
+put_tiles_in_board_left.
+
+put_tiles_in_penalty.
 
 move_boardleft_to_boardright.
 
@@ -64,6 +89,7 @@ assign_points.
 
 end.
 
+put_tiles_in_bag.
 
 
 
