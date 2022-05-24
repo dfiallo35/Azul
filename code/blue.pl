@@ -90,20 +90,20 @@ take_tiles(Array):-
     find_all(Hand, Array).
 
 find_all(_, []):-!.
-find_all(Tiles, Array):-
+find_all(RHand, Array):-
     Array = [X1|Y1],
-    (Tiles = X1, !,
+    (RHand = X1, !,
     right_hand(Hand),
     append([X1], Hand, NewHand),
     retractall(right_hand(_)),
     assert(right_hand(NewHand)),
-    find_all(Tiles, Y1), !);
+    find_all(RHand, Y1), !);
     (Array = [X2|Y2],
     left_hand(LHand),
     append([X2], LHand, NewLHand),
     retract(left_hand(_)),
     assert(left_hand(NewLHand)),
-    find_all(Tiles, Y2)).
+    find_all(RHand, Y2)).
 
 
 
