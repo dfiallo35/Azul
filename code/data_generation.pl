@@ -1,9 +1,9 @@
-%game slabs
-slab('white').
-slab('black').
-slab('red').
-slab('orange').
-slab('blue').
+%game tiles
+tile('white').
+tile('black').
+tile('red').
+tile('orange').
+tile('blue').
 
 %background right table
 background([['blue', 'orange', 'red', 'black', 'white'], ['white', 'blue', 'orange', 'red', 'black'], ['black', 'white', 'blue', 'orange', 'red'], ['red', 'black', 'white', 'blue', 'orange'], ['orange', 'red', 'black', 'white', 'blue']]).
@@ -12,7 +12,7 @@ background([['blue', 'orange', 'red', 'black', 'white'], ['white', 'blue', 'oran
 penalty([[-1], [-1], [-2], [-2], [-2], [-3], [-3]]).
 
 
-%game slabs bag
+%game tiles bag
 :-dynamic(bag/1).
 bag([]).
 
@@ -27,6 +27,14 @@ bag([]).
 
 %actual player in turn
 :-dynamic(player/1).
+
+%tiles in the right hand of the player
+%contains the tiles you are going to use
+:-dynamic(right_hand/1).
+
+%tiles in the left hand of the player
+%contains the tiles that wiil not be used, they go to the center or to the bag
+:-dynamic(left_hand/1).
 
 %player personal board
 :-dynamic(board/5).
@@ -54,6 +62,7 @@ retractall_board:-
     retractall(board_right(_, _)),
     retractall(board_penalty(_, _)).
 
+
 %board points
 :-dynamic(points/2).
 
@@ -78,25 +87,29 @@ number_of_players:-
 
 
 
-%you must retractall bags before use this
-%generate the bag with 100 slabs with 20 for each color
-generate_slabs_bag:-
-    slab(Slab),
+%generate the bag with 100 tiles with 20 for each color
+generate_tiles_bag:-
+    retractall(bag(_)),
+    assert(bag([])),
+    g_tiles_bag.
+g_tiles_bag:-
+    tile(Tile),
     bag(Bag),
-    not(member(Slab, Bag)), !,
-    fill_bag(20, Slab),
-    generate_slabs_bag.
-generate_slabs_bag.
+    not(member(Tile, Bag)), !,
+    fill_bag(20, Tile),
+    g_tiles_bag.
+g_tiles_bag.
 
-%fill the bag with 20 slabs for each type
-fill_bag(0, Slab):-!.
-fill_bag(N, Slab):-
+%fill the bag with 20 tiles for each type
+fill_bag(0, _):-!.
+fill_bag(N, Tile):-
     S is N-1,
     bag(Bag),
     retractall(bag(_)),
-    append([Slab], Bag, NewBag),
+    append([Tile], Bag, NewBag),
     assert(bag(NewBag)),
-    fill_bag(S, Slab).
+    fill_bag(S, Tile).
+
 
 
 %generate the factories
@@ -112,7 +125,6 @@ generate_factories:-
     players(4),
     retractall(factory(_)),
     generate_factory(9), !.
-
 generate_factory(0).
 generate_factory(N):-
     S is N-1,
@@ -129,23 +141,26 @@ fill_factories:-
     fill_factories.
 fill_factories.
 
-%fill the factory with N slabs
+%fill the factory with N tiles
 fill_factory(0, Factory):- assert(factory(Factory)), !.
 fill_factory(N, Factory):-
     S is N -1,
     bag(Bag),
     length(Bag, Lb),
-    random_between(1, Lb, SlabIndex),
-    nth1(SlabIndex, Bag, Slab, NewBag),
+    random_between(1, Lb, TileIndex),
+    nth1(TileIndex, Bag, Tile, NewBag),
     retractall(bag(_)),
     assert(bag(NewBag)),
-    append([Slab], Factory, NewFactory),
+    append([Tile], Factory, NewFactory),
     fill_factory(S, NewFactory).
 
-
+generate_players_boards(NumberOfPlayers):-
+    retractall_board,
+    players(P),
+    g_players_boards(P).
 
 %generate the boards of the players
-generate_players_boards(NumberOfPlayers):-
+g_players_boards(NumberOfPlayers):-
     NumberOfPlayers > 0, !,
     assert_board(NumberOfPlayers,
     0,
@@ -153,5 +168,21 @@ generate_players_boards(NumberOfPlayers):-
     [[[], [], [], [], []], [[], [], [], [], []], [[], [], [], [], []], [[], [], [], [], []], [[], [], [], [], []]],
     [[], [], [], [], [], [], []]),
     N is NumberOfPlayers - 1,
-    generate_players_boards(N).
-generate_players_boards(_).
+    g_players_boards(N).
+g_players_boards(_).
+
+
+
+%generate de center of the factories
+generate_center:-
+    retractall(center(_)),
+    assert(center([])).
+
+
+
+%select a random player of the game
+select_random_player:-
+    players(P),
+    random_between(1, P, ActualPlayer),
+    retractall(player(_)),
+    assert(player(ActualPlayer)).
