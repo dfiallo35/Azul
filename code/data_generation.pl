@@ -28,6 +28,9 @@ bag([]).
 %actual player in turn
 :-dynamic(player/1).
 
+%leftover tiles
+:-dynamic(leftover/1).
+
 %tiles in the right hand of the player
 %contains the tiles you are going to use
 :-dynamic(right_hand/1).
