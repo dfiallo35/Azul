@@ -107,7 +107,24 @@ find_all(RHand, Array):-
 
 
 
-put_tiles_in_board_left.
+put_tiles_in_board_left:-
+    right_hand(RHand), !,
+    length(RHand, LenRHand),
+    player(Player),
+    board_left(Player, LBoard).
+
+
+
+%OK
+%checks that the array has at least one free slot for tiles
+free_space(Array):-
+    Array = [X|Y],
+    X = [], !;
+    Array = [X|Y],
+    free_space(Y).
+
+%checks that the entire Array has the same color as the right hand tiles
+is_same_colour(Array).
 
 put_tiles_in_penalty.
 
@@ -117,9 +134,23 @@ assign_points.
 
 end.
 
-put_tiles_in_bag.
 
+%OK
+%take all the tiles in leftover and puts them in the bag
+put_tiles_in_bag:-
+    leftover(Leftover),
+    bag(Bag),
+    retractall(leftover(_)),
+    retractall(bag(_)),
+    p_tiles_in_bag(Bag, Leftover).
 
+p_tiles_in_bag(Bag, []):-
+    assert(leftover([])),
+    assert(bag(Bag)), !.
+p_tiles_in_bag(Bag, Leftover):-
+    Leftover = [X|Y],
+    append([X], Bag, NewBag),
+    p_tiles_in_bag(NewBag, Y).
 
 
 
