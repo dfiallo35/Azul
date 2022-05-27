@@ -132,13 +132,17 @@ put_tiles_in_board_left:-
 %OK
 %checks that the array has at least one free slot for tiles
 free_space(Array):-
-    Array = [X|Y],
-    X = [], !;
-    Array = [X|Y],
-    free_space(Y).
+    member([], Array), !.
+
 
 %checks that the entire Array has the same color as the right hand tiles
-is_same_colour(Array).
+is_same_colour([]):-!.
+is_same_colour(Array):-
+    right_hand(RHand),
+    nth1(1,RHand, Tile, _),
+    Array = [X|Y],
+    (X = [], ! ; X = Tile),
+    is_same_colour(Y).
 
 put_tiles_in_penalty.
 
