@@ -17,3 +17,7 @@ insert(Val, [H|List], Index, [H|Res]):-
     NewIndex is Index -1,
     insert(Val, List, NewIndex, Res).
 insert(Val, List, 1, [Val|List]).
+
+replace(Val, Array, Index, NewArray):-
+    nth1(Index, Array, _, NArray),
+    insert(Val, NArray, Index, NewArray).
