@@ -31,8 +31,12 @@ bag([]).
 %leftover tiles
 :-dynamic(leftover/1).
 
+%tile for thr firs player to take from the center
+:-dynamic(onetile/1).
+
 %tiles in the right hand of the player
 %contains the tiles you are going to use
+%all the tiles always have the same colour in this hand
 :-dynamic(right_hand/1).
 
 %tiles in the left hand of the player
@@ -79,6 +83,18 @@ retractall_board:-
 :-dynamic(board_penalty/2).
 
 
+%retract all the game
+retract_all:-
+    retractall(left_hand(_)),
+    retractall(center(_)),
+    retractall(right_hand(_)),
+    retractall(player(_)),
+    retractall(leftover(_)),
+    retractall(players(_)),
+    retractall_board,
+    retractall(bag(_)),
+    retractall(factory(_)),
+    retractall(onetile(_)).
 
 %select the number of players
 number_of_players:-
@@ -157,7 +173,7 @@ fill_factory(N, Factory):-
     append([Tile], Factory, NewFactory),
     fill_factory(S, NewFactory).
 
-generate_players_boards(NumberOfPlayers):-
+generate_players_boards:-
     retractall_board,
     players(P),
     g_players_boards(P).
@@ -177,9 +193,13 @@ g_players_boards(_).
 
 
 %generate de center of the factories
+%put the onetile in it
 generate_center:-
     retractall(center(_)),
-    assert(center([])).
+    onetile(OneTile),
+    retractall(onetile(_)),
+    assert(onetile([])),
+    assert(center([OneTile])).
 
 
 
@@ -188,4 +208,15 @@ select_random_player:-
     players(P),
     random_between(1, P, ActualPlayer),
     retractall(player(_)),
-    assert(player(ActualPlayer)).
+
+
+%generate the one tile
+generate_onetile:-
+    retractall(onetile(_)),
+    assert(onetile('one')).
+
+
+%generate the leftover
+generate_leftover:-
+    retractall(leftover(_)),
+    assert(leftover([])).
