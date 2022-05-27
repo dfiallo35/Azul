@@ -64,11 +64,25 @@ find_tiles_in_factory:-
 
 
 %TODO: take the special tile
+%OK
+%take tiles from center
+%if the onetile is in center, it goes to the left hand
 find_tiles_in_center:-
     center(Center), !,
     retractall(center(_)),
     retractall(right_hand(_)),
     retractall(left_hand(_)),
+    (center(Center),
+    nth1(_, Center, 'one', NCenter),
+    retractall(center(_)),
+    assert(center(NCenter)),
+    f_tiles_incenter,
+    retractall(left_hand(_)),
+    assert(left_hand(['one'])), !);
+    (f_tiles_incenter).
+f_tiles_incenter:-
+    center(Center),
+    retractall(center(_)),
     length(Center, LCenter),
     random_between(1, LCenter, RCenter),
     nth1(RCenter, Center, ToRightHand),
