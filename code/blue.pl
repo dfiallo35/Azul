@@ -152,6 +152,48 @@ assign_points.
 
 end.
 
+%move the useless tiles to left hand
+righthand_to_lefthand:-
+    right_hand(RightHand),
+    retractall(right_hand(_)),
+    left_hand(LeftHand),
+    retractall(left_hand(_)),
+    append(LeftHand, RightHand, NewLeftHand),
+    assert(right_hand([])),
+    assert(left_hand(NewLeftHand)).
+    
+
+%OK
+%take the one tile from left hand to player board_penalty
+lefthand_to_penalty:-
+    (left_hand(LeftHand),
+    player(Player),
+    LeftHand = [], !);
+    (left_hand(LeftHand),
+    player(Player),
+    board_penalty(Player, Penalty),
+    left_hand(LeftHand),
+    nth1(Pos, Penalty, [], _), !,
+    retract(board_penalty(Player, _)),
+    LeftHand = [X1|Y1],
+    replace(X1, Penalty, Pos, NewPenalty),
+    retractall(left_hand(_)),
+    assert(left_hand(Y1)),
+    assert(board_penalty(Player, NewPenalty)),
+    lefthand_to_penalty, !);
+    (left_hand(LeftHand),
+    player(Player),
+    leftover(Leftover),
+    left_hand(LeftHand),
+    retractall(leftover(_)),
+    LeftHand = [X2|Y2],
+    append([X2], Leftover, NewLeftover),
+    retractall(left_hand(_)),
+    assert(left_hand(Y2)),
+    assert(leftover(NewLeftover)),
+    lefthand_to_penalty, !).
+
+
 
 %OK
 %take all the tiles in leftover and puts them in the bag
