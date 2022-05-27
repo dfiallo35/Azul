@@ -8,12 +8,15 @@ play:-
     generate_tiles_bag,
     generate_factories,
     fill_factories,
-    generate_players_boards(P),
+    generate_players_boards,
+    generate_onetile,
+    generate_leftover,
     generate_center,
     select_random_player.
     %turn(1).
 
-
+%TODO: about the leftover
+%TODO: fix the body
 %body of the game
 %execute all actions of the turn
 turn(Turn):-
@@ -23,8 +26,8 @@ turn(Turn):-
     not(end), !,
 
     % BODY
-    (find_tiles_in_factory, (put_tiles_in_board_left, !) ; (put_tiles_in_penalty, !), !);
-    (find_tiles_in_center, (put_tiles_in_board_left, !) ; (put_tiles_in_penalty, !), !);
+    (find_tiles_in_factory, put_tiles_in_board_left, !);
+    (find_tiles_in_center, put_tiles_in_board_left, !);
     (move_boardleft_to_boardright, !);
     (assign_points, !),
 
@@ -45,6 +48,7 @@ next_player:-
 
 %OK
 %take all the tiles of the same color of one factory
+%the left hand ends empty
 find_tiles_in_factory:-
     factory(Factory), !,
     retract(factory(Factory)),
@@ -63,13 +67,10 @@ find_tiles_in_factory:-
     assert(left_hand([])).
 
 
-%TODO: take the special tile
 %OK
 %take tiles from center
 %if the onetile is in center, it goes to the left hand
 find_tiles_in_center:-
-    center(Center), !,
-    retractall(center(_)),
     retractall(right_hand(_)),
     retractall(left_hand(_)),
     (center(Center),
@@ -92,9 +93,9 @@ f_tiles_incenter:-
     retractall(left_hand(_)),
     assert(center(LHand)),
     assert(left_hand([])).
-    
-
+%OK
 %takes all the tiles of the same type and put them in the hand
+%importants in right hand and the othes in left hand
 take_tiles(Array):-
     right_hand(Hand),
     retractall(right_hand(_)),
@@ -102,7 +103,6 @@ take_tiles(Array):-
     assert(right_hand([])),
     assert(left_hand([])),
     find_all(Hand, Array).
-
 find_all(_, []):-!.
 find_all(RHand, Array):-
     Array = [X1|Y1],
@@ -120,8 +120,10 @@ find_all(RHand, Array):-
     find_all(RHand, Y2)).
 
 
-
+%TODO: working......
+%left hand must be empty exept for the onetile
 put_tiles_in_board_left:-
+    %onetile_to_penalty,
     right_hand(RHand), !,
     length(RHand, LenRHand),
     player(Player),
@@ -135,6 +137,7 @@ free_space(Array):-
     member([], Array), !.
 
 
+%OK
 %checks that the entire Array has the same color as the right hand tiles
 is_same_colour([]):-!.
 is_same_colour(Array):-
@@ -144,14 +147,13 @@ is_same_colour(Array):-
     (X = [], ! ; X = Tile),
     is_same_colour(Y).
 
-put_tiles_in_penalty.
 
+%TODO: important methods
 move_boardleft_to_boardright.
-
 assign_points.
-
 end.
 
+%OK
 %move the useless tiles to left hand
 righthand_to_lefthand:-
     right_hand(RightHand),
