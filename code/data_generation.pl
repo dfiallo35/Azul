@@ -208,6 +208,7 @@ select_random_player:-
     players(P),
     random_between(1, P, ActualPlayer),
     retractall(player(_)),
+    assert(player(ActualPlayer)).
 
 
 %generate the one tile
