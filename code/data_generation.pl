@@ -1,3 +1,5 @@
+:-consult(tools).
+
 %game tiles
 tile('white').
 tile('black').
@@ -221,3 +223,34 @@ generate_onetile:-
 generate_leftover:-
     retractall(leftover(_)),
     assert(leftover([])).
+
+%generate hands
+generate_hands:-
+    retractall(left_hand(_)),
+    retractall(right_hand(_)),
+    assert(left_hand([])),
+    assert(right_hand([])).
+
+player_data:-
+    player(Player),
+    writeln(' '),
+    write('Player '), write(Player), writeln(':'),
+    bag(BG),
+    p('Bag ', BG),
+    board_left(Player, BL),
+    p('Left Board ', BL),
+    board_right(Player, BR),
+    p('Right Board ', BR),
+    board_penalty(Player, BP),
+    p('Penalty Board ', BP),
+    findall(F, factory(F), D),
+    p('Factories ', D),
+    leftover(L),
+    p('Leftover ', L),
+    center(C),
+    p('Center ', C),
+    % right_hand(RH),
+    % p('Right Hand ', RH),
+    % left_hand(LH),
+    % p('Left Hand ', LH),
+    writeln(' ').

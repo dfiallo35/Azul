@@ -2,39 +2,44 @@
 :-consult(data_generation).
 
 
-%Inicialize the game
+%Initialize the game
 play:-
     number_of_players,
     generate_tiles_bag,
     generate_factories,
     fill_factories,
     generate_players_boards,
+    generate_hands,
     generate_onetile,
     generate_leftover,
     generate_center,
-    select_random_player.
-    %turn(1).
+    select_random_player,
+    round(1).
 
-%TODO: about the leftover
+
+
 %TODO: fix the body
 %body of the game
-%execute all actions of the turn
-turn(Turn):-
-    write('*****Turn '), write(Turn), writeln('*****'),
+%execute all actions of the round
+round(40):-!.
+round(Round):-
+    (write('*****Round '), write(Round), writeln('*****'),
     player(ActualPlayer),
     write('-Actual Player: '), writeln(ActualPlayer),
-    not(end), !,
-
+    player_data),
+    
     % BODY
-    (find_tiles_in_factory, put_tiles_in_board_left, !);
-    (find_tiles_in_center, put_tiles_in_board_left, !);
-    (move_boardleft_to_boardright, !);
-    (assign_points, !),
-
+    ((end, !);
+    (w(1),find_tiles_in_factory, put_tiles_in_board_left, w(1.5), !);
+    (w(2), find_tiles_in_center, put_tiles_in_board_left,w(2.5), !);
+    (w(3), move_boardleft_to_boardright, penalty_points, penalty_to_leftover, put_tiles_in_bag, generate_factories, fill_factories, generate_onetile, generate_center, w(3.5), !)),
+    ((end, assign_points_end, winner, writeln('*****Game Over*****'));
+    (w(4), player_data,
 
     next_player,
-    NewTurn is Turn +1,
-    turn(NewTurn).
+    NewRound is Round +1,
+    round(NewRound))).
+
 
 
 %next player to play
@@ -44,6 +49,7 @@ next_player:-
     players(Players),
     S is ((ActualPlayer) mod (Players)) +1,
     assert(player(S)).
+
 
 
 %OK
@@ -67,20 +73,21 @@ find_tiles_in_factory:-
     assert(left_hand([])).
 
 
+
 %OK
 %take tiles from center
 %if the onetile is in center, it goes to the left hand
 find_tiles_in_center:-
-    retractall(right_hand(_)),
-    retractall(left_hand(_)),
-    (center(Center),
+    (retractall(right_hand(_)),
+    retractall(left_hand(_))),
+    ((center(Center),
     nth1(_, Center, 'one', NCenter),
     retractall(center(_)),
     assert(center(NCenter)),
     f_tiles_incenter,
     retractall(left_hand(_)),
     assert(left_hand(['one'])), !);
-    (f_tiles_incenter).
+    (f_tiles_incenter)).
 f_tiles_incenter:-
     center(Center),
     retractall(center(_)),
@@ -93,7 +100,7 @@ f_tiles_incenter:-
     retractall(left_hand(_)),
     assert(center(LHand)),
     assert(left_hand([])).
-%OK
+
 %takes all the tiles of the same type and put them in the hand
 %importants in right hand and the othes in left hand
 take_tiles(Array):-
@@ -120,38 +127,145 @@ find_all(RHand, Array):-
     find_all(RHand, Y2)).
 
 
-%TODO: working......
+%OK
+%put the tiles from right hand to left board if it is posible
 %left hand must be empty exept for the onetile
 put_tiles_in_board_left:-
-    %onetile_to_penalty,
+    lefthand_to_penalty,
     right_hand(RHand), !,
-    length(RHand, LenRHand),
     player(Player),
-    board_left(Player, LBoard).
+    board_left(Player, LBoard),
+    board_right(Player, RBoard),
+    find_tile(RHand, Tile),
+    find_valid_line(LBoard, RBoard, Tile, ValidLine),
+    length(ValidLine, LenValidLine),
+    fill_line(ValidLine, NewLine),
+    replace(NewLine, LBoard, LenValidLine, NewLBoard),
+    retractall(board_left(Player, _)),
+    assert(board_left(Player, NewLBoard)),
+    lefthand_to_penalty.
 
+%fill the valid line from the left board
+fill_line(Line, NewLine):-
+    (right_hand(RHand),
+    RHand = [],
+    NewLine = Line, !);
+    (not(free_space(Line)),
+    righthand_to_lefthand,
+    NewLine = Line, !);
+    (right_hand(RHand),
+    retractall(right_hand(_)),
+    RHand = [X|Y],
+    nth1(Pos, Line, [], _), !,
+    replace(X, Line, Pos, NLine),
+    assert(right_hand(Y)),
+    fill_line(NLine, NewLine), !).
 
+%find a valid left line to play
+%with the len you can know the index
+%ValidLine return one valid line in left board
+find_valid_line(LBoard, RBoard, Tile, ValidLBoard):-
+    (LBoard = [XL|_],
+    RBoard = [XR|_],
+    valid_line(XL, XR, Tile), ValidLBoard = XL, !);
+    (LBoard = [_|YL],
+    RBoard = [_|YR],
+    find_valid_line(YL, YR, Tile, ValidLBoard)).
 
-%OK
+valid_line(ArrayLeft, ArrayRight, Tile):-
+    not(member(Tile, ArrayRight)),
+    free_space(ArrayLeft),
+    is_same_colour(ArrayLeft, Tile).
+
 %checks that the array has at least one free slot for tiles
 free_space(Array):-
     member([], Array), !.
 
-
-%OK
-%checks that the entire Array has the same color as the right hand tiles
-is_same_colour([]):-!.
-is_same_colour(Array):-
-    right_hand(RHand),
-    nth1(1,RHand, Tile, _),
+%checks that the entire Array has the same color as the tile
+%admit arrays with no tiles
+is_same_colour([], _):-!.
+is_same_colour(Array, Tile):-
     Array = [X|Y],
     (X = [], ! ; X = Tile),
-    is_same_colour(Y).
+    is_same_colour(Y, Tile).
+
+
+%OK
+move_boardleft_to_boardright:-
+    players(P),
+    m_boardleft_to_boardright(P).
+
+m_boardleft_to_boardright(0):- !.
+m_boardleft_to_boardright(N):-
+    boardleft_to_boardright(1),
+    next_player,
+    S is N-1,
+    m_boardleft_to_boardright(S).
+
+%OK
+boardleft_to_boardright(6):- !.
+boardleft_to_boardright(N):-
+    (player(Player),
+    board_left(Player, BoardLeft),
+    nth1(N, BoardLeft, LeftLine, _),
+    free_space(LeftLine),
+    S is N +1,
+    boardleft_to_boardright(S), !);
+    (player(Player),
+    board_left(Player, BoardLeft),
+    nth1(N, BoardLeft, LeftLine, _),
+    board_right(Player, BoardRight),
+    nth1(N, BoardRight, RightLine, _),
+    background(Background),
+    nth1(N, Background, BackgroundLine, _),
+    take_tile_from_boardleft(LeftLine),
+    right_hand(RightHand),
+    retractall(right_hand(_)),
+    assert(right_hand([])),
+    RightHand = [X|_],
+    nth1(Pos, BackgroundLine, X, _),
+    assign_points(N, Pos),
+    replace(X, RightLine, Pos, NewRightLine),
+    replace(NewRightLine, BoardRight, N, NewBoardRight),
+    retractall(board_right(Player, _)),
+    assert(board_right(Player, NewBoardRight)),
+    retractall(board_left(Player, _)),
+    fill_array(N, [], NewLeftLine),
+    replace(NewLeftLine, BoardLeft, N, NewBoardLeft),
+    retractall(board_left(Player, _)),
+    assert(board_left(Player, NewBoardLeft)),
+    S is N +1,
+    boardleft_to_boardright(S), !).
+%OK
+%puts one of th tiles in the right hand and the rest in the leftover
+take_tile_from_boardleft(LeftLine):-
+    nth1(1, LeftLine, Tile, Rest),
+    retractall(right_hand(_)),
+    assert(right_hand([Tile])),
+    leftover(Leftover),
+    retractall(leftover(_)),
+    append(Rest, Leftover, NewLeftover),
+    assert(leftover(NewLeftover)).
 
 
 %TODO: important methods
-move_boardleft_to_boardright.
-assign_points.
-end.
+assign_points_end.
+assign_points(Row, Column).
+penalty_points.
+end:-
+    fail.
+winner.
+
+
+%OK
+%find a tile in an array
+find_tile(Array, Tile):-
+    Array = [X|Y],
+    ((X = [],
+    find_tile(Y, Tile), !);
+    (not(X = []),
+    Tile = X)).
+
 
 %OK
 %move the useless tiles to left hand
@@ -166,15 +280,14 @@ righthand_to_lefthand:-
     
 
 %OK
+%take all the tiles on left hand to penalty board
 %take the one tile from left hand to player board_penalty
 lefthand_to_penalty:-
     (left_hand(LeftHand),
-    player(Player),
     LeftHand = [], !);
     (left_hand(LeftHand),
     player(Player),
     board_penalty(Player, Penalty),
-    left_hand(LeftHand),
     nth1(Pos, Penalty, [], _), !,
     retract(board_penalty(Player, _)),
     LeftHand = [X1|Y1],
@@ -184,7 +297,6 @@ lefthand_to_penalty:-
     assert(board_penalty(Player, NewPenalty)),
     lefthand_to_penalty, !);
     (left_hand(LeftHand),
-    player(Player),
     leftover(Leftover),
     left_hand(LeftHand),
     retractall(leftover(_)),
@@ -215,5 +327,34 @@ p_tiles_in_bag(Bag, Leftover):-
     p_tiles_in_bag(NewBag, Y).
 
 
+penalty_to_leftover:-
+    players(P),
+    p_to_leftover(P).
 
+p_to_leftover(0):- !.
+p_to_leftover(N):-
+    player(Player),
+    board_penalty(Player, BPenalty),
+    retractall(board_penalty(Player, _)),
+    fill_array(7, [], NPenalty),
+    assert(board_penalty(Player, NPenalty)),
+    no_empty_slots(BPenalty, NewBPenalty),
+    not(NewBPenalty = []),
+    leftover(Leftover),
+    retractall(leftover(_)),
+    append(NewBPenalty, Leftover, NewLeftover),
+    assert(leftover(NewLeftover)),
+    next_player,
+    S is N-1,
+    p_to_leftover(S);
+    next_player,
+    S is N-1,
+    p_to_leftover(S).
 
+%OK
+no_empty_slots(Line, NewLine):-
+    nth1(_, Line, [], NLine),
+    no_empty_slots(NLine, NewLine), !;
+    nth1(_, Line, 'one', NLine),
+    no_empty_slots(NLine, NewLine), !;
+    NewLine = Line.

@@ -1,10 +1,10 @@
 
 
-fill_array(_, 0, _, []):- !.
-fill_array(Array, N, Obj, [X|Y]):- 
+fill_array(0, _, []):- !.
+fill_array(N, Obj, [X|Y]):- 
     S is N-1,
     X = Obj,
-    fill_array(Array, S, Obj, Y).
+    fill_array(S, Obj, Y).
     
 
 
@@ -21,3 +21,9 @@ insert(Val, List, 1, [Val|List]).
 replace(Val, Array, Index, NewArray):-
     nth1(Index, Array, _, NArray),
     insert(Val, NArray, Index, NewArray).
+
+p(VarName, Var):-
+    write(VarName), write(' '), writeln(Var).
+
+w(Text):-
+    writeln(Text).
