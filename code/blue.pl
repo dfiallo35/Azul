@@ -33,7 +33,7 @@ round(Round):-
     (w(1),find_tiles_in_factory, put_tiles_in_board_left, w(1.5), !);
     (w(2), find_tiles_in_center, put_tiles_in_board_left,w(2.5), !);
     (w(3), move_boardleft_to_boardright, penalty_points, penalty_to_leftover, put_tiles_in_bag, generate_factories, fill_factories, generate_onetile, generate_center, w(3.5), !)),
-    ((end, assign_points_end, winner, writeln('*****Game Over*****'));
+    ((end, assign_points_end, winner, writeln('*****Game Over*****'), !);
     (w(4), player_data,
 
     next_player,
@@ -250,7 +250,6 @@ take_tile_from_boardleft(LeftLine):-
 
 %TODO: important methods
 assign_points_end.
-assign_points(Row, Column).
 penalty_points.
 end:-
     fail.
@@ -358,3 +357,92 @@ no_empty_slots(Line, NewLine):-
     nth1(_, Line, 'one', NLine),
     no_empty_slots(NLine, NewLine), !;
     NewLine = Line.
+
+
+%OK
+%assign the players points for every movement from left board to right board
+assign_points(Row, Column):-
+    player(Player),
+    find_vertical(Row, Column),
+    find_horizontal(Row, Column).
+
+%OK
+find_vertical(Row, Column):-
+    NRow1 is Row -1,
+    NRow2 is Row +1,
+    find_up(NRow1, Column),
+    find_down(NRow2, Column),
+    player(Player),
+    points(Player, Points),
+    retractall(points(Player, _)),
+    S is Points + 1,
+    assert(points(Player, S)).
+
+%OK
+find_up(0, _):-!.
+find_up(Row, Column):-
+    (player(Player),
+    board_right(Player, BoardRight),
+    nth1(Row, BoardRight, Line, _),
+    nth1(Column, Line, Tile, _)),
+    ((Tile = [], !);
+    (points(Player, Points),
+    retractall(points(Player, _)),
+    NewPoints is Points + 1,
+    assert(points(Player, NewPoints)),
+    NewRow is Row - 1,
+    find_up(NewRow, Column))).
+
+%Ok
+find_down(6, _):-!.
+find_down(Row, Column):-
+    (player(Player),
+    board_right(Player, BoardRight),
+    nth1(Row, BoardRight, Line, _),
+    nth1(Column, Line, Tile, _)),
+    ((Tile = [], !);
+    (points(Player, Points),
+    retractall(points(Player, _)),
+    NewPoints is Points + 1,
+    assert(points(Player, NewPoints)),
+    NewRow is Row + 1,
+    find_down(NewRow, Column))).
+
+find_horizontal(Row, Column):-
+    NColumn1 is Column -1,
+    NColumn2 is Column +1,
+    find_left(Row, NColumn1),
+    find_right(Row, NColumn2),
+    player(Player),
+    points(Player, Points),
+    retractall(points(Player, _)),
+    S is Points + 1,
+    assert(points(Player, S)).
+
+find_left(_, 0):-!.
+find_left(Row, Column):-
+    (player(Player),
+    board_right(Player, BoardRight),
+    nth1(Row, BoardRight, Line, _),
+    nth1(Column, Line, Tile, _)),
+    ((Tile = [], !);
+    (points(Player, Points),
+    retractall(points(Player, _)),
+    NewPoints is Points + 1,
+    assert(points(Player, NewPoints)),
+    NewColumn is Column - 1,
+    find_left(Row, NewColumn))).
+
+find_right(_, 6):-!.
+find_right(Row, Column):-
+    (player(Player),
+    board_right(Player, BoardRight),
+    nth1(Row, BoardRight, Line, _),
+    nth1(Column, Line, Tile, _)),
+    ((Tile = [], !);
+    (points(Player, Points),
+    retractall(points(Player, _)),
+    NewPoints is Points + 1,
+    assert(points(Player, NewPoints)),
+    NewColumn is Column + 1,
+    find_right(Row, NewColumn))).
