@@ -34,7 +34,7 @@ round(Round):-
     (move_boardleft_to_boardright, penalty_points, penalty_to_leftover, put_tiles_in_bag, generate_factories, not(end), fill_factories, generate_onetile, generate_center, all_players_data, !);
     (assign_points_end, find_winner, writeln('*****Game Over*****'), !)),
     
-    ((end; not(fill_factories));(player_data, next_player, NewRound is Round +1, round(NewRound))).
+    ((end, writeln('***One Full Row***'); not(fill_factories), writeln('***No More Tiles***'));(player_data, next_player, NewRound is Round +1, round(NewRound))).
 
 
 
@@ -234,9 +234,142 @@ take_tile_from_boardleft(LeftLine):-
     assert(leftover(NewLeftover)).
 
 
-%TODO: important methods
-assign_points_end.
-penalty_points.
+%TODO: 2nd step, have more tiles in right board
+find_winner:-
+    players(P),
+    retractall(winner(_)),
+    assert(winner(0)),
+    f_winner(P),
+    winner(W),
+    write('***The winer/s is/are '), write(W), writeln('***').
+
+
+f_winner(0):-!.
+f_winner(N):-
+    player(Player),
+    winner(Winner),
+    retractall(winner(_)),
+    points(Player, Points),
+    %Array
+    ((Winner = [X|_],
+        ((Points > X,
+        assert(winner(Player)), !);
+        (Points = X,
+        append([Player], [Winner], NewWinner),
+        assert(winner(NewWinner)), !)), !
+    );
+    ((Points > Winner,
+    assert(winner(Player)), !);
+    (Points = Winner,
+    append([Player], [Winner], NewWinner),
+    assert(winner(NewWinner)), !))),
+    S is N -1,
+    f_winner(S).
+    
+
+%OK
+assign_points_end:-
+    players(P),
+    find_rows(P),
+    find_columns(P),
+    find_colors(P).
+
+%OK
+find_rows(0):-!.
+find_rows(N):-
+    player(Player),
+    board_right(Player, RBoard),
+    f_rows(RBoard),
+    next_player,
+    S is N -1,
+    find_rows(S).
+f_rows([]):-!.
+f_rows(RBoard):-
+    RBoard = [X|Y],
+    ((not(free_space(X)),
+    player(Player),
+    points(Player, Points),
+    retractall(points(Player, _)),
+    NewPoints is Points + 2,
+    assert(points(Player, NewPoints)),
+    f_rows(Y), !);
+    (f_rows(Y))).
+
+%OK
+find_columns(0):-!.
+find_columns(N):-
+    f_columns(1),
+    next_player,
+    S is N -1,
+    find_columns(S).
+f_columns(6):-!.
+f_columns(N):-
+    player(Player),
+    board_right(Player, RBoard),
+    retractall(aux(_)),
+    assert(aux([])),
+    sub_f_columns(RBoard, N),
+    ((aux(Aux),
+    not(free_space(Aux)),
+    points(Player, Points),
+    retractall(points(Player, _)),
+    NewPoints is Points + 7,
+    assert(points(Player, NewPoints)),
+    S is N +1,
+    f_columns(S), !);
+    (S is N +1,
+    f_columns(S))).
+
+sub_f_columns([], _):-!.
+sub_f_columns(RBoard, N):-
+    RBoard = [X|Y],
+    aux(Aux),
+    retractall(aux(_)),
+    nth1(N, X, Tile, _),
+    append([Tile], Aux, NewAux),
+    assert(aux(NewAux)),
+    sub_f_columns(Y, N).
+
+%OK
+find_colors(0):-!.
+find_colors(N):-
+    player(Player),
+    board_right(Player, RBoard),
+    retractall(aux(_)),
+    assert(aux([])),
+    f_colors(RBoard),
+    check_aux(1),
+    next_player,
+    S is N -1,
+    find_colors(S).
+f_colors([]):-!.
+f_colors(RBoard):-
+    RBoard = [X|Y],
+    aux(Aux),
+    retractall(aux(_)),
+    append(X, Aux, NewAux),
+    assert(aux(NewAux)),
+    f_colors(Y).
+check_aux(6):-!.
+check_aux(N):-
+    aux(Aux),
+    C = ['blue', 'red', 'white', 'black', 'orange'],
+    nth1(N, C, Color, _),
+    count(Color, Aux, Count),
+    ((Count = 5,
+    player(Player),
+    points(Player, Points),
+    retractall(points(Player, _)),
+    NewPoints is Points + 10,
+    assert(points(Player, NewPoints)),
+    S is N+1,
+    check_aux(S), !);
+    (S is N+1,
+    check_aux(S))).
+    
+
+
+
 end:-
     players(P),
     m_end(P).

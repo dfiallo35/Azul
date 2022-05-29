@@ -16,6 +16,8 @@ penalty([0, -1, -2, -4, -6, -8, -11, -14]).
 %game winners
 :-dynamic(winner/1).
 
+:-dynamic(aux/1).
+
 %game tiles bag
 :-dynamic(bag/1).
 bag([]).
