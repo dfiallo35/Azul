@@ -23,16 +23,18 @@ play:-
 %body of the game
 %execute all actions of the round
 round(Round):-
-    (write('*****Round '), write(Round), writeln('*****'),
+    (write('############# Round '), write(Round), writeln(' #############'),
     player(ActualPlayer),
     write('-Actual Player: '), writeln(ActualPlayer),
+    writeln(" "),
+    writeln('***Actual Player Data Before Round***'),
     player_data),
     
     % BODY
     ((find_tiles_in_factory, put_tiles_in_board_left, !);
     (find_tiles_in_center, put_tiles_in_board_left, !);
     (move_boardleft_to_boardright, penalty_points, penalty_to_leftover, put_tiles_in_bag, generate_factories, not(end), fill_factories, generate_onetile, generate_center, all_players_data, !);
-    (assign_points_end, find_winner, writeln('*****Game Over*****'), !)),
+    (assign_points_end, generate_onetile, generate_center, all_players_data, find_winner, writeln('*****Game Over*****'), !)),
     
     ((end, writeln('***One Full Row***'); not(fill_factories), writeln('***No More Tiles***'));(player_data, next_player, NewRound is Round +1, round(NewRound))).
 
@@ -238,33 +240,84 @@ take_tile_from_boardleft(LeftLine):-
 find_winner:-
     players(P),
     retractall(winner(_)),
-    assert(winner(0)),
     f_winner(P),
+    number_of_tiles,
     winner(W),
-    write('***The winer/s is/are '), write(W), writeln('***').
+    write('***The winer/s is/are Player/s '), write(W), writeln('***').
 
+number_of_tiles.
 
+%OK
 f_winner(0):-!.
 f_winner(N):-
-    player(Player),
-    winner(Winner),
-    retractall(winner(_)),
-    points(Player, Points),
-    %Array
-    ((Winner = [X|_],
-        ((Points > X,
-        assert(winner(Player)), !);
-        (Points = X,
-        append([Player], [Winner], NewWinner),
-        assert(winner(NewWinner)), !)), !
-    );
-    ((Points > Winner,
-    assert(winner(Player)), !);
-    (Points = Winner,
-    append([Player], [Winner], NewWinner),
-    assert(winner(NewWinner)), !))),
-    S is N -1,
-    f_winner(S).
+    (
+        (
+            player(Player),
+            winner(Winner),
+            points(Player, Points),
+            (
+                (
+                    Winner = [X|_],
+                    points(X, WinnerPoints),
+                    (
+                        (Points > WinnerPoints,
+                        retractall(winner(_)),
+                        assert(winner(Player)),
+                        S is N -1,
+                        next_player,
+                        f_winner(S), !);
+
+                        (Points = WinnerPoints,
+                        append([Player], [Winner], NewWinner),
+                        retractall(winner(_)),
+                        assert(winner(NewWinner)),
+                        S is N -1,
+                        next_player,
+                        f_winner(S), !);
+
+                        (S is N -1,
+                        next_player,
+                        f_winner(S)), !
+                    )
+                );
+                (
+                    points(Winner, WinnerPoints),
+                    (
+                        (Points > WinnerPoints,
+                        retractall(winner(_)),
+                        assert(winner(Player)),
+                        S is N -1,
+                        next_player,
+                        f_winner(S), !);
+
+                        (Points = WinnerPoints,
+                        append([Player], [Winner], NewWinner),
+                        retractall(winner(_)),
+                        assert(winner(NewWinner)),
+                        S is N -1,
+                        next_player,
+                        f_winner(S), !);
+
+                        (S is N -1,
+                        next_player,
+                        f_winner(S))
+                    )
+                );
+                (
+                    S is N - 1,
+                    next_player,
+                    f_winner(S)
+                )
+            )
+        );
+
+        (player(Player),
+        retractall(winner(_)),
+        assert(winner(Player)),
+        S is N -1,
+        next_player,
+        f_winner(S))
+    ).
     
 
 %OK
