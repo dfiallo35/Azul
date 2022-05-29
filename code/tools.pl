@@ -5,7 +5,11 @@ fill_array(N, Obj, [X|Y]):-
     S is N-1,
     X = Obj,
     fill_array(S, Obj, Y).
-    
+
+
+count(_, [], 0):-!.
+count(X, [X|Y], C):-!, count(X, Y, C1), C is C1 +1.
+count(X, [_|Y], C):-count(X, Y, C).
 
 
 map(_,[],[]):-!.
