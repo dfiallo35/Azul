@@ -243,7 +243,53 @@ find_winner:-
     f_winner(P),
     number_of_tiles,
     winner(W),
-    write('***The winer/s is/are Player/s '), write(W), writeln('***').
+    ((W = [_|_],
+    retractall(aux(_)),
+    number_of_tiles(W),
+    findall(A, aux(A), Aux),
+    nth1(_, Aux, [], NAux), !,
+    retractall(aux(_)),
+    assert(aux(NAux)),
+    count_tiles(NAux),
+    aux(List),
+    max_list(List, Max),
+    findall(Pos, nth1(Pos, List, Max, _), AbsoluteWinner),
+    write('***The winer/s is/are Player/s '), write(AbsoluteWinner), writeln('***'), !);
+    (write('***The winer/s is/are Player/s '), write(W), writeln('***'))).
+
+%count the tiles in the list of right board
+count_tiles([]):-!.
+count_tiles(Aux):-
+    Aux = [X|Y],
+    count([], X, C),
+    length(X, LX),
+    NewC is LX - C,
+    aux(NAux),
+    retractall(aux(_)),
+    nth1(Pos, NAux, X, _), !,
+    replace(NewC, NAux, Pos, NewAux),
+    assert(aux(NewAux)),
+    count_tiles(Y).
+
+%make a list with the right board tiles
+number_of_tiles([]):-!.
+number_of_tiles(W):-
+    W = [X|Y],
+    asserta(aux([])),
+    board_right(X, RBoard),
+    list_rows(RBoard),
+    number_of_tiles(Y).
+list_rows([]):-
+    aux(Aux), !,
+    retract(aux(Aux)),
+    assertz(aux(Aux)), !.
+list_rows(RBoard):-
+    RBoard = [X|Y],
+    aux(Aux), !,
+    retract(aux(Aux)),
+    append(Aux, X, NewAux),
+    asserta(aux(NewAux)),
+    list_rows(Y).
 
 number_of_tiles.
 
