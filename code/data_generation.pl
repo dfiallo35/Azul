@@ -11,8 +11,10 @@ tile('blue').
 background([['blue', 'orange', 'red', 'black', 'white'], ['white', 'blue', 'orange', 'red', 'black'], ['black', 'white', 'blue', 'orange', 'red'], ['red', 'black', 'white', 'blue', 'orange'], ['orange', 'red', 'black', 'white', 'blue']]).
 
 % penalty point
-penalty([[-1], [-1], [-2], [-2], [-2], [-3], [-3]]).
+penalty([0, -1, -2, -4, -6, -8, -11, -14]).
 
+%game winners
+:-dynamic(winner/1).
 
 %game tiles bag
 :-dynamic(bag/1).
@@ -96,6 +98,7 @@ retract_all:-
     retractall_board,
     retractall(bag(_)),
     retractall(factory(_)),
+    retractall(winner(_)),
     retractall(onetile(_)).
 
 %select the number of players
@@ -231,26 +234,47 @@ generate_hands:-
     assert(left_hand([])),
     assert(right_hand([])).
 
+generate_winners:-
+    retractall(winner(_)),
+    assert(winner([])).
+
 player_data:-
     player(Player),
     writeln(' '),
     write('Player '), write(Player), writeln(':'),
-    bag(BG),
-    p('Bag ', BG),
+    points(Player, P),
+    p('Points ', P),
+    findall(F, factory(F), D),
+    p('Factories ', D),
+    center(C),
+    p('Center ', C),
     board_left(Player, BL),
     p('Left Board ', BL),
     board_right(Player, BR),
     p('Right Board ', BR),
     board_penalty(Player, BP),
     p('Penalty Board ', BP),
-    findall(F, factory(F), D),
-    p('Factories ', D),
-    leftover(L),
-    p('Leftover ', L),
-    center(C),
-    p('Center ', C),
-    % right_hand(RH),
-    % p('Right Hand ', RH),
-    % left_hand(LH),
-    % p('Left Hand ', LH),
+    
     writeln(' ').
+
+all_players_data:-
+    writeln('*****All Players Data*****'),
+    players(P),
+    sub_all_players_data(P),
+    writeln('*****End All Players Data*****').
+
+sub_all_players_data(0):-!.
+sub_all_players_data(N):-
+    player_data,
+    next_player,
+    Nn is N - 1,
+    sub_all_players_data(Nn).
+
+
+%next player to play
+next_player:-
+    player(ActualPlayer),
+    retractall(player(_)),
+    players(Players),
+    S is ((ActualPlayer) mod (Players)) +1,
+    assert(player(S)).
