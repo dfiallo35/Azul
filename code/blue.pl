@@ -13,15 +13,15 @@ play:-
     generate_onetile,
     generate_leftover,
     generate_center,
+    generate_winners,
     select_random_player,
     round(1).
 
 
 
-%TODO: fix the body
+%TODO: working...
 %body of the game
 %execute all actions of the round
-round(40):-!.
 round(Round):-
     (write('*****Round '), write(Round), writeln('*****'),
     player(ActualPlayer),
@@ -29,26 +29,12 @@ round(Round):-
     player_data),
     
     % BODY
-    ((end, !);
-    (w(1),find_tiles_in_factory, put_tiles_in_board_left, w(1.5), !);
-    (w(2), find_tiles_in_center, put_tiles_in_board_left,w(2.5), !);
-    (w(3), move_boardleft_to_boardright, penalty_points, penalty_to_leftover, put_tiles_in_bag, generate_factories, fill_factories, generate_onetile, generate_center, w(3.5), !)),
-    ((end, assign_points_end, winner, writeln('*****Game Over*****'), !);
-    (w(4), player_data,
-
-    next_player,
-    NewRound is Round +1,
-    round(NewRound))).
-
-
-
-%next player to play
-next_player:-
-    player(ActualPlayer),
-    retractall(player(_)),
-    players(Players),
-    S is ((ActualPlayer) mod (Players)) +1,
-    assert(player(S)).
+    ((find_tiles_in_factory, put_tiles_in_board_left, !);
+    (find_tiles_in_center, put_tiles_in_board_left, !);
+    (move_boardleft_to_boardright, penalty_points, penalty_to_leftover, put_tiles_in_bag, generate_factories, not(end), fill_factories, generate_onetile, generate_center, all_players_data, !);
+    (assign_points_end, find_winner, writeln('*****Game Over*****'), !)),
+    
+    ((end; not(fill_factories));(player_data, next_player, NewRound is Round +1, round(NewRound))).
 
 
 
