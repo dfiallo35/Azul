@@ -238,8 +238,33 @@ take_tile_from_boardleft(LeftLine):-
 assign_points_end.
 penalty_points.
 end:-
-    fail.
-winner.
+    players(P),
+    m_end(P).
+
+m_end(0):-
+    winner(W),
+    W = [], !, fail;
+    (true), !.
+m_end(N):-
+    player(Player),
+    next_player,
+    board_right(Player, BoardRight),
+    full_line(BoardRight),
+    S is N-1,
+    m_end(S).
+
+full_line([]):-!.
+full_line(BoardRight):-
+    BoardRight = [X|Y],
+    ((not(free_space(X)),
+    winner(Winner),
+    retractall(winner(_)),
+    player(Player),
+    append([Player], Winner, NewWinner),
+    assert(winner(NewWinner)), !);
+    (full_line(Y))).
+
+
 
 
 %OK
@@ -311,7 +336,8 @@ p_tiles_in_bag(Bag, Leftover):-
     append([X], Bag, NewBag),
     p_tiles_in_bag(NewBag, Y).
 
-
+%Ok
+%puts the tiles in penalty to leftover
 penalty_to_leftover:-
     players(P),
     p_to_leftover(P).
@@ -336,7 +362,6 @@ p_to_leftover(N):-
     S is N-1,
     p_to_leftover(S).
 
-%OK
 no_empty_slots(Line, NewLine):-
     nth1(_, Line, [], NLine),
     no_empty_slots(NLine, NewLine), !;
@@ -349,8 +374,19 @@ no_empty_slots(Line, NewLine):-
 %assign the players points for every movement from left board to right board
 assign_points(Row, Column):-
     player(Player),
+    points(Player, Points),
     find_vertical(Row, Column),
-    find_horizontal(Row, Column).
+    points(Player, Points1),
+    find_horizontal(Row, Column),
+    points(Player, Points2),
+    S1 is Points1 - Points,
+    S2 is Points2 - Points1,
+    (((S1 = 1, !; S2 = 1, !),
+    retractall(points(Player, _)),
+    S3 is Points2 -1,
+    assert(points(Player, S3)), !
+    ));
+    (!).
 
 %OK
 find_vertical(Row, Column):-
@@ -432,3 +468,29 @@ find_right(Row, Column):-
     assert(points(Player, NewPoints)),
     NewColumn is Column + 1,
     find_right(Row, NewColumn))).
+
+
+%decreases the players points according to the amount of tiles in the penalty board
+penalty_points:-
+    players(P),
+    p_points(P).
+
+p_points(0):-!.
+p_points(N):-
+    (player(Player),
+    board_penalty(Player, BoardPenalty),
+    penalty(Penalty),
+    points(Player, Points),
+    retractall(points(Player, _))),
+    (
+        (nth1(Pos, BoardPenalty, [], _), nth1(Pos, Penalty, Sub, _), S is Points + Sub,
+            ((S >= 0, assert(points(Player, S)), !);
+            (assert(points(Player, 0)), !)), !);
+
+        (S is Points -14,((S >= 0, assert(points(Player, S)), !);
+        (assert(points(Player, 0)), !)), !)
+    ),
+    next_player,
+    Nn is N -1,
+    p_points(Nn).
+
