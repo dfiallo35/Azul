@@ -40,7 +40,6 @@ round(Round):-
 
 
 
-%OK
 %take all the tiles of the same color of one factory
 %the left hand ends empty
 find_tiles_in_factory:-
@@ -62,7 +61,6 @@ find_tiles_in_factory:-
 
 
 
-%OK
 %take tiles from center
 %if the onetile is in center, it goes to the left hand
 find_tiles_in_center:-
@@ -159,11 +157,11 @@ find_valid_line(LBoard, RBoard, Tile, ValidLBoard):-
     (LBoard = [_|YL],
     RBoard = [_|YR],
     find_valid_line(YL, YR, Tile, ValidLBoard)).
-
 valid_line(ArrayLeft, ArrayRight, Tile):-
     not(member(Tile, ArrayRight)),
     free_space(ArrayLeft),
     is_same_colour(ArrayLeft, Tile).
+
 
 %checks that the array has at least one free slot for tiles
 free_space(Array):-
@@ -178,7 +176,8 @@ is_same_colour(Array, Tile):-
     is_same_colour(Y, Tile).
 
 
-%OK
+
+%move the tiles from left board to right board
 move_boardleft_to_boardright:-
     players(P),
     m_boardleft_to_boardright(P).
@@ -190,7 +189,6 @@ m_boardleft_to_boardright(N):-
     S is N-1,
     m_boardleft_to_boardright(S).
 
-%OK
 boardleft_to_boardright(6):- !.
 boardleft_to_boardright(N):-
     (player(Player),
@@ -224,7 +222,7 @@ boardleft_to_boardright(N):-
     assert(board_left(Player, NewBoardLeft)),
     S is N +1,
     boardleft_to_boardright(S), !).
-%OK
+
 %puts one of th tiles in the right hand and the rest in the leftover
 take_tile_from_boardleft(LeftLine):-
     nth1(1, LeftLine, Tile, Rest),
@@ -241,7 +239,6 @@ find_winner:-
     players(P),
     retractall(winner(_)),
     f_winner(P),
-    number_of_tiles,
     winner(W),
     ((W = [_|_],
     retractall(aux(_)),
@@ -291,9 +288,8 @@ list_rows(RBoard):-
     asserta(aux(NewAux)),
     list_rows(Y).
 
-number_of_tiles.
 
-%OK
+%find the player with the most points
 f_winner(0):-!.
 f_winner(N):-
     (
@@ -364,16 +360,16 @@ f_winner(N):-
         next_player,
         f_winner(S))
     ).
-    
 
-%OK
+
+%assign all the points for full row, column or color
 assign_points_end:-
     players(P),
     find_rows(P),
     find_columns(P),
     find_colors(P).
 
-%OK
+%assign the points for every full row
 find_rows(0):-!.
 find_rows(N):-
     player(Player),
@@ -394,7 +390,7 @@ f_rows(RBoard):-
     f_rows(Y), !);
     (f_rows(Y))).
 
-%OK
+%assign the points for every full column
 find_columns(0):-!.
 find_columns(N):-
     f_columns(1),
@@ -418,7 +414,7 @@ f_columns(N):-
     f_columns(S), !);
     (S is N +1,
     f_columns(S))).
-
+%take all the tiles from right board and puts them on a list
 sub_f_columns([], _):-!.
 sub_f_columns(RBoard, N):-
     RBoard = [X|Y],
@@ -429,7 +425,7 @@ sub_f_columns(RBoard, N):-
     assert(aux(NewAux)),
     sub_f_columns(Y, N).
 
-%OK
+%assign 10 points for every color who apears 5 times in right board
 find_colors(0):-!.
 find_colors(N):-
     player(Player),
@@ -465,14 +461,12 @@ check_aux(N):-
     check_aux(S), !);
     (S is N+1,
     check_aux(S))).
-    
 
 
-
+%true if there is a full row
 end:-
     players(P),
     m_end(P).
-
 m_end(0):-
     winner(W),
     W = [], !, fail;
@@ -484,7 +478,6 @@ m_end(N):-
     full_line(BoardRight),
     S is N-1,
     m_end(S).
-
 full_line([]):-!.
 full_line(BoardRight):-
     BoardRight = [X|Y],
@@ -498,8 +491,6 @@ full_line(BoardRight):-
 
 
 
-
-%OK
 %find a tile in an array
 find_tile(Array, Tile):-
     Array = [X|Y],
@@ -509,7 +500,7 @@ find_tile(Array, Tile):-
     Tile = X)).
 
 
-%OK
+
 %move the useless tiles to left hand
 righthand_to_lefthand:-
     right_hand(RightHand),
@@ -521,7 +512,7 @@ righthand_to_lefthand:-
     assert(left_hand(NewLeftHand)).
     
 
-%OK
+
 %take all the tiles on left hand to penalty board
 %take the one tile from left hand to player board_penalty
 lefthand_to_penalty:-
@@ -551,7 +542,6 @@ lefthand_to_penalty:-
 
 
 
-%OK
 %take all the tiles in leftover and puts them in the bag
 put_tiles_in_bag:-
     leftover(Leftover),
@@ -559,7 +549,6 @@ put_tiles_in_bag:-
     retractall(leftover(_)),
     retractall(bag(_)),
     p_tiles_in_bag(Bag, Leftover).
-
 p_tiles_in_bag(Bag, []):-
     assert(leftover([])),
     assert(bag(Bag)), !.
@@ -568,12 +557,12 @@ p_tiles_in_bag(Bag, Leftover):-
     append([X], Bag, NewBag),
     p_tiles_in_bag(NewBag, Y).
 
-%Ok
+
+
 %puts the tiles in penalty to leftover
 penalty_to_leftover:-
     players(P),
     p_to_leftover(P).
-
 p_to_leftover(0):- !.
 p_to_leftover(N):-
     player(Player),
@@ -593,7 +582,6 @@ p_to_leftover(N):-
     next_player,
     S is N-1,
     p_to_leftover(S).
-
 no_empty_slots(Line, NewLine):-
     nth1(_, Line, [], NLine),
     no_empty_slots(NLine, NewLine), !;
@@ -602,7 +590,7 @@ no_empty_slots(Line, NewLine):-
     NewLine = Line.
 
 
-%OK
+
 %assign the players points for every movement from left board to right board
 assign_points(Row, Column):-
     player(Player),
@@ -617,10 +605,8 @@ assign_points(Row, Column):-
     retractall(points(Player, _)),
     S3 is Points2 -1,
     assert(points(Player, S3)), !
-    ));
-    (!).
+    ));(!).
 
-%OK
 find_vertical(Row, Column):-
     NRow1 is Row -1,
     NRow2 is Row +1,
@@ -631,8 +617,6 @@ find_vertical(Row, Column):-
     retractall(points(Player, _)),
     S is Points + 1,
     assert(points(Player, S)).
-
-%OK
 find_up(0, _):-!.
 find_up(Row, Column):-
     (player(Player),
@@ -646,8 +630,6 @@ find_up(Row, Column):-
     assert(points(Player, NewPoints)),
     NewRow is Row - 1,
     find_up(NewRow, Column))).
-
-%Ok
 find_down(6, _):-!.
 find_down(Row, Column):-
     (player(Player),
@@ -672,7 +654,6 @@ find_horizontal(Row, Column):-
     retractall(points(Player, _)),
     S is Points + 1,
     assert(points(Player, S)).
-
 find_left(_, 0):-!.
 find_left(Row, Column):-
     (player(Player),
@@ -686,7 +667,6 @@ find_left(Row, Column):-
     assert(points(Player, NewPoints)),
     NewColumn is Column - 1,
     find_left(Row, NewColumn))).
-
 find_right(_, 6):-!.
 find_right(Row, Column):-
     (player(Player),
@@ -702,11 +682,11 @@ find_right(Row, Column):-
     find_right(Row, NewColumn))).
 
 
+
 %decreases the players points according to the amount of tiles in the penalty board
 penalty_points:-
     players(P),
     p_points(P).
-
 p_points(0):-!.
 p_points(N):-
     (player(Player),

@@ -101,6 +101,7 @@ retract_all:-
     retractall(bag(_)),
     retractall(factory(_)),
     retractall(winner(_)),
+    retractall(aux(_)),
     retractall(onetile(_)).
 
 %select the number of players
